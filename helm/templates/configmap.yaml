@@ -1,0 +1,8 @@
+{{ if .Values.configMap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "name" . }}-configmap
+data:
+{{ (.Files.Glob (print  "configs/" .Values.configMap.configFile ) ).AsConfig | indent 2 }}
+{{- end }}

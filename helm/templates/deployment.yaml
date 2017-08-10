@@ -1,0 +1,55 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "name" . }}
+  labels:
+    chart: {{ template "name" . }}-{{ .Chart.Version | replace "+" "_" }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+    spec:
+      containers:
+      - name: {{ template "name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+{{ toYaml .Values.service.env | indent 10 }}
+        ports:
+        {{- range $i, $port := .Values.service.ports }}
+        - containerPort: {{ $port.internalPort }}
+        {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ (index .Values.service.ports 0).internalPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ (index .Values.service.ports 0).internalPort }}
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+{{- if .Values.configMap.enabled }}
+        volumeMounts:
+          - name: config-volume
+            mountPath: /opt/config
+{{- end }}
+      volumes:
+        - name: ssl-certs
+          hostPath:
+            path: /etc/ssl/certs
+{{- if .Values.configMap.enabled }}
+        - name: config-volume
+          configMap:
+            name: {{ template "name" . }}-configmap
+            items:
+              - key: {{ .Values.configMap.configFile }}
+                path: cerebro.conf
+{{- end }}

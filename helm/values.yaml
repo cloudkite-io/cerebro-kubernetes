@@ -1,0 +1,46 @@
+replicaCount: 1
+
+image:
+  repository: gcr.io/cloudkite-public/cerebro
+  tag: latest
+  pullPolicy: Always
+service:
+  name: cerebro
+  type: ClusterIP
+  ports:
+    - name: http
+      externalPort: 80
+      internalPort: 9000
+      protocol: TCP
+  env:
+    - name: PORT
+      value: "9000"
+    - name: BIND_HOST
+      value: "0.0.0.0"
+    - name: CONFIG_PATH
+      value: "/opt/config/cerebro.conf"
+
+ingress:
+  enabled: true
+  servicePort: 80
+  hosts:
+    - cerebro.env.domain.com
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+  tls:
+    - secretName: cerebro-tls
+      hosts:
+        - cerebro.env.domain.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 500Mi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+
+configMap:
+  enabled: true
+  configFile: cerebro.conf
