@@ -24,13 +24,13 @@ spec:
         {{- end }}
         readinessProbe:
           httpGet:
-            path: /
+            path: /login
             port: {{ (index .Values.service.ports 0).internalPort }}
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /
+            path: /login
             port: {{ (index .Values.service.ports 0).internalPort }}
           initialDelaySeconds: 15
           periodSeconds: 20
